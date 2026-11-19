@@ -887,9 +887,9 @@ function renderScene(t){
     if(chipA>0.01){
       ctx.save(); ctx.globalAlpha*=chipA;
       let bx=130;
-      bx+=drawTypeBadge(ctx,'CANON',bx,800,PAL.badges.canon,'left')+14;
-      bx+=drawTypeBadge(ctx,'IMPLIED',bx,800,PAL.badges.implied,'left')+14;
-      drawTypeBadge(ctx,'FAN THEORY',bx,800,PAL.badges.theory,'left');
+      bx+=drawTypeBadge(ctx,'CANON',bx,884,PAL.badges.canon,'left')+14;
+      bx+=drawTypeBadge(ctx,'IMPLIED',bx,884,PAL.badges.implied,'left')+14;
+      drawTypeBadge(ctx,'FAN THEORY',bx,884,PAL.badges.theory,'left');
       ctx.restore();
     }
   }
@@ -1056,9 +1056,15 @@ function renderScene(t){
   if(t>=47.3 && t<50.73){
     drawDialgaStage(ctx,t);
   } else if(t>=50.73 && t<50.98){
-    drawPalkiaStage(ctx,t);
+    /* curtain wipe: BOTH stages clipped to their own side of the edge —
+       stages are transparent overlays, so clipping only the incoming one
+       leaves the outgoing card visible through it (dual-card ghosting).
+       With dual clips every pixel belongs to exactly one stage. */
     const edgeX=lerp(-60,1980,easeInOutCubic(norm(t,50.73,50.98)));
-    ctx.save(); ctx.beginPath(); ctx.rect(edgeX,0,Math.max(0,W-edgeX),H); ctx.clip();
+    ctx.save(); ctx.beginPath(); ctx.rect(0,0,Math.max(0,edgeX),H); ctx.clip();
+    drawPalkiaStage(ctx,t);
+    ctx.restore();
+    ctx.save(); ctx.beginPath(); ctx.rect(Math.min(edgeX,W),0,Math.max(0,W-edgeX),H); ctx.clip();
     drawDialgaStage(ctx,t);
     ctx.restore();
     const grd=ctx.createLinearGradient(edgeX-16,0,edgeX+16,0);
@@ -1068,15 +1074,22 @@ function renderScene(t){
   } else if(t>=50.98 && t<54.11){
     drawPalkiaStage(ctx,t);
   } else if(t>=54.11 && t<54.36){
-    drawPalkiaStage(ctx,t);
+    /* rift wipe: Giratina clipped INTO the tear band, Palkia clipped to the
+       band's complement (evenodd) — dual clip, zero cross-stage bleed */
     const hw=lerp(0,1600,easeOutCubic(norm(t,54.11,54.36)));
     const band=bandPoly(hw);
-    ctx.save(); ctx.beginPath();
-    ctx.moveTo(band.L[0].x,band.L[0].y);
-    for(let i=1;i<band.L.length;i++) ctx.lineTo(band.L[i].x,band.L[i].y);
-    for(let i=band.R.length-1;i>=0;i--) ctx.lineTo(band.R[i].x,band.R[i].y);
-    ctx.closePath(); ctx.clip();
+    const traceBand=()=>{
+      ctx.moveTo(band.L[0].x,band.L[0].y);
+      for(let i=1;i<band.L.length;i++) ctx.lineTo(band.L[i].x,band.L[i].y);
+      for(let i=band.R.length-1;i>=0;i--) ctx.lineTo(band.R[i].x,band.R[i].y);
+      ctx.closePath();
+    };
+    ctx.save(); ctx.beginPath(); traceBand(); ctx.clip();
     drawGiratinaStage(ctx,t);
+    ctx.restore();
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0,0,W,H); traceBand(); ctx.clip('evenodd');
+    drawPalkiaStage(ctx,t);
     ctx.restore();
     ctx.save(); ctx.strokeStyle=PAL.crimsonSpec; ctx.lineWidth=3;
     ctx.shadowColor=PAL.crimson; ctx.shadowBlur=14;
@@ -1098,12 +1111,12 @@ function renderScene(t){
     trio.forEach(([tx,img,nm],i)=>{
       const a=norm(t,61.30+i*0.13,61.58+i*0.13);
       if(a<=0.01) return;
-      drawMedallionBase(ctx,tx,792,38,PAL.gold,t,a);
-      drawNodeArt(ctx,IMG[img],tx,792,38,a,0.35);
+      drawMedallionBase(ctx,tx,845,38,PAL.gold,t,a);
+      drawNodeArt(ctx,IMG[img],tx,845,38,a,0.35);
       ctx.save(); ctx.globalAlpha*=a;
       ctx.textAlign='left'; ctx.textBaseline='alphabetic';
       ctx.font='800 40px "Barlow Condensed", sans-serif'; ctx.fillStyle=PAL.offWhite;
-      ctx.fillText(nm,tx+54,805);
+      ctx.fillText(nm,tx+54,858);
       ctx.restore();
     });
   }
