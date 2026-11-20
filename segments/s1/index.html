@@ -973,6 +973,10 @@ function wrapText(c, text, x, y, maxW, lh){
 function centerCard(c, t, s, title, sub, accent){
   const a = Math.min(norm(t, s.start, s.start + 0.4), norm(t, s.end - 0.35, s.end) > 0 ? 1 - norm(t, s.end - 0.35, s.end) : 1);
   c.save(); c.globalAlpha = Math.max(0, a);
+  const ogx = 960 + 260 * Math.cos(t * 0.55), ogy = 430 + 150 * Math.sin(t * 0.55);
+  const og = c.createRadialGradient(ogx, ogy, 0, ogx, ogy, 520);
+  og.addColorStop(0, hexA(accent || PAL.gold, 0.16)); og.addColorStop(1, hexA(accent || PAL.gold, 0));
+  c.fillStyle = og; c.fillRect(0, 0, 1920, 1080);
   drawEditorialCard(c, 410, 300, 1100, 330, accent || PAL.gold, 1);
   c.textAlign = 'center'; c.fillStyle = PAL.offWhite;
   c.font = '800 92px "Barlow Condensed", sans-serif';
@@ -985,6 +989,11 @@ function centerCard(c, t, s, title, sub, accent){
 function drawQuote(c, t, s){
   const a = Math.min(norm(t, s.start, s.start + 0.4), 1 - norm(t, s.end - 0.35, s.end));
   c.save(); c.globalAlpha = Math.max(0, a);
+  const ogx = 960 + 260 * Math.cos(t * 0.55), ogy = 430 + 150 * Math.sin(t * 0.55);
+  const og = c.createRadialGradient(ogx, ogy, 0, ogx, ogy, 520);
+  og.addColorStop(0, 'rgba(255,208,0,0.16)'); og.addColorStop(1, 'rgba(255,208,0,0)');
+  c.fillStyle = og; c.fillRect(0, 0, 1920, 1080);
+
   drawEditorialCard(c, 360, 268, 1200, 380, PAL.gold, 1);
   c.textAlign = 'center'; c.fillStyle = PAL.offWhite;
   c.font = 'italic 600 52px "Barlow", sans-serif';
