@@ -865,8 +865,14 @@ function drawStage(c, t, beat){
   const lt = t - beat.start, dur = beat.end - beat.start;
   const e = easeOutCubic(norm(lt, 0, 0.45));
   const sps = beat.species;
-  const push = dur > 9 ? 1 + 0.05 * norm(lt, 4.5, 9) : 1;
+  const push = 1 + 0.05 * norm(lt, 0, Math.min(dur, 9));
   c.save(); c.globalAlpha = e;
+  if (sps.length){
+    const gx = 960 + 200 * Math.cos(t * 0.5), gy = 420 + 130 * Math.sin(t * 0.5);
+    const gg = c.createRadialGradient(gx, gy, 0, gx, gy, 430);
+    gg.addColorStop(0, hexA(sps[0].accent, 0.14)); gg.addColorStop(1, hexA(sps[0].accent, 0));
+    c.fillStyle = gg; c.fillRect(0, 0, 1920, 1080);
+  }
   if (beat.presil && sps.length){
     const sp0 = sps[0];
     c.save(); c.globalAlpha = e;
@@ -898,8 +904,8 @@ function drawStage(c, t, beat){
     let cx, cy, size;
     if (sps.length === 1){ cx = giratina ? 1300 : (beat.variant === 2 ? 960 : (beat.variant === 1 ? 1320 : 600)); cy = 440; size = 600 * push; }
     else if (sps.length === 2){ cx = i === 0 ? 470 : 1450; cy = 420; size = 520 * push; }
-    else if (sps.length === 3){ cx = [320, 960, 1600][i]; cy = 415; size = 470; }
-    else { cx = [240, 720, 1200, 1680][i]; cy = 400; size = 395; }
+    else if (sps.length === 3){ cx = [320, 960, 1600][i]; cy = 415; size = 470 * push; }
+    else { cx = [240, 720, 1200, 1680][i]; cy = 400; size = 395 * push; }
     if (skipStd){
       /* variant 2 art drawn in the plate branch below */
     } else if (SEG === 2 && sp.name === 'Arceus'){
@@ -1059,7 +1065,7 @@ function drawSpecial(c, t, s){
     const a = Math.min(norm(t, s.start, s.start + 0.45), 1 - norm(t, s.end - 0.35, s.end));
     c.save(); c.globalAlpha = Math.max(0, a);
     const zp = 1 + 0.045 * norm(t, s.start, s.end);
-    c.translate(960, 470); c.scale(zp, zp); c.translate(-960, -470);
+    c.translate(960, 380); c.scale(zp, zp); c.translate(-960, -380);
     const rows = [['144', 'g144', 'ARTICUNO'], ['145', 'g145', 'ZAPDOS'], ['146', 'g146', 'MOLTRES']];
     rows.forEach((r, i) => {
       const yy = 190 + i * 215;
@@ -1071,14 +1077,14 @@ function drawSpecial(c, t, s){
     c.font = '800 84px "Barlow Condensed", sans-serif'; c.textAlign = 'center'; c.fillStyle = PAL.gold;
     c.fillText('KANTO', 400, 128); c.fillText('GALAR', 1520, 128);
     c.font = '800 64px "Barlow Condensed", sans-serif'; c.fillText('VS', 960, 470);
-    drawTypeBadge(c, 'REGIONAL FORMS — SAME #144 / #145 / #146', 960, 800, PAL.badges.implied, 'center');
+    drawTypeBadge(c, 'REGIONAL FORMS — SAME #144 / #145 / #146', 960, 782, PAL.badges.implied, 'center');
     c.restore();
   }
   else if (s.kind === 'paradox'){
     const a = Math.min(norm(t, s.start, s.start + 0.45), 1 - norm(t, s.end - 0.35, s.end));
     c.save(); c.globalAlpha = Math.max(0, a);
     const zp = 1 + 0.045 * norm(t, s.start, s.end);
-    c.translate(960, 470); c.scale(zp, zp); c.translate(-960, -470);
+    c.translate(960, 380); c.scale(zp, zp); c.translate(-960, -380);
     if (IMG['1005']) drawHeroArt(c, IMG['1005'], 470, 430, 560, PAL.cyanSpec, t, 1, 0, 'none', PAL.cyanSpec);
     if (IMG['245']) drawHeroArt(c, IMG['245'], 1450, 430, 560, PAL.blueDeep, t, 1, 2, 'none', PAL.blueDeep);
     c.font = '800 76px "Barlow Condensed", sans-serif'; c.textAlign = 'center'; c.fillStyle = PAL.offWhite;
