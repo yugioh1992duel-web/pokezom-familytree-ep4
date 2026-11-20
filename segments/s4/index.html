@@ -694,7 +694,7 @@ function drawBackground2(c, t, tint){
   const g = c.createRadialGradient(960, 470, 120, 960, 540, 1180);
   g.addColorStop(0, '#171B2C'); g.addColorStop(0.55, '#101322'); g.addColorStop(1, '#0B0D14');
   c.fillStyle = g; c.fillRect(0, 0, W, H);
-  if (tint){ c.save(); c.globalAlpha = 0.10; c.fillStyle = tint; c.fillRect(0, 0, W, H); c.restore(); }
+  if (tint){ c.save(); c.globalAlpha = 0.045; c.fillStyle = tint; c.fillRect(0, 0, W, H); c.restore(); }
   c.save(); c.globalCompositeOperation = 'lighter';
   for (const n of nebula){
     const nx = n.x + Math.sin(t * n.sp + n.ph) * n.dx, ny = n.y + Math.cos(t * n.sp * 0.8 + n.ph) * n.dy;
@@ -727,6 +727,11 @@ function drawBackground2(c, t, tint){
     c.beginPath(); c.arc(px, py, p.radius, 0, Math.PI * 2); c.fill();
   }
   c.restore();
+  /* bottom-band fade: ambient glow must not pool below the y=880 line */
+  const bf = c.createLinearGradient(0, 820, 0, 1080);
+  bf.addColorStop(0, 'rgba(11,13,20,0)'); bf.addColorStop(0.45, 'rgba(11,13,20,0.55)');
+  bf.addColorStop(1, 'rgba(11,13,20,0.88)');
+  c.fillStyle = bf; c.fillRect(0, 820, W, 260);
 }
 function drawGrain2(c, t){
   const frame = Math.round(t * 60);
@@ -778,6 +783,10 @@ function drawSheetSilhouette(c, dex, cx, cy, size, accent, alpha){
 function drawMapGeneric(c, t, mode){
   const nodes = D.mapNodes;
   c.save();
+  c.beginPath(); c.rect(0, 0, W, 880); c.clip();
+  c.translate(960 + Math.sin(t * 0.21) * 10, 500 + Math.cos(t * 0.17) * 8);
+  c.scale(1 + 0.02 * Math.sin(t * 0.13), 1 + 0.02 * Math.sin(t * 0.13));
+  c.translate(-960, -500);
   for (const e of D.mapEdges){
     const a = nodes[e.a], b = nodes[e.b];
     if (!a || !b) continue;
@@ -816,6 +825,7 @@ function drawMapGeneric(c, t, mode){
       c.fillText(n.name.toUpperCase(), p.x, Math.min(872, p.y + r + 52)); c.restore();
     }
   }
+  c.restore();
   c.restore();
   /* opaque branch header chip, top-right (top-left TV zone stays clear) */
   c.save();
@@ -864,6 +874,23 @@ function drawStage(c, t, beat){
   const sps = beat.species;
   const push = dur > 9 ? 1 + 0.05 * norm(lt, 4.5, 9) : 1;
   c.save(); c.globalAlpha = e;
+  if (beat.presil && sps.length){
+    const sp0 = sps[0];
+    c.save(); c.globalAlpha = e;
+    drawMedallionBase(c, 960, 430, 190, sp0.accent, t, 0.95);
+    const spr0 = IMG[String(sp0.dex)];
+    if (spr0){
+      c.save(); c.beginPath(); c.arc(960, 430, 178, 0, Math.PI * 2); c.clip();
+      drawSilhouette(c, String(sp0.dex), 960, 430, 356, sp0.accent, 0.95);
+      c.restore();
+    }
+    fxPulseRings(sp0.accent, 26, 110, 330)(c, t, 960, 430);
+    c.font = '800 64px "Barlow Condensed", sans-serif'; c.textAlign = 'center'; c.fillStyle = PAL.offWhite;
+    c.fillText(D.kick + ' — ' + D.title, 960, 712);
+    c.restore();
+    c.restore();
+    return;
+  }
   const solo = sps.length === 1;
   const giratina = solo && sps[0].name === 'Giratina';
   if (giratina){
@@ -1031,6 +1058,8 @@ function drawSpecial(c, t, s){
   else if (s.kind === 'galarian'){
     const a = Math.min(norm(t, s.start, s.start + 0.45), 1 - norm(t, s.end - 0.35, s.end));
     c.save(); c.globalAlpha = Math.max(0, a);
+    const zp = 1 + 0.045 * norm(t, s.start, s.end);
+    c.translate(960, 470); c.scale(zp, zp); c.translate(-960, -470);
     const rows = [['144', 'g144', 'ARTICUNO'], ['145', 'g145', 'ZAPDOS'], ['146', 'g146', 'MOLTRES']];
     rows.forEach((r, i) => {
       const yy = 190 + i * 215;
@@ -1048,6 +1077,8 @@ function drawSpecial(c, t, s){
   else if (s.kind === 'paradox'){
     const a = Math.min(norm(t, s.start, s.start + 0.45), 1 - norm(t, s.end - 0.35, s.end));
     c.save(); c.globalAlpha = Math.max(0, a);
+    const zp = 1 + 0.045 * norm(t, s.start, s.end);
+    c.translate(960, 470); c.scale(zp, zp); c.translate(-960, -470);
     if (IMG['1005']) drawHeroArt(c, IMG['1005'], 470, 430, 560, PAL.cyanSpec, t, 1, 0, 'none', PAL.cyanSpec);
     if (IMG['245']) drawHeroArt(c, IMG['245'], 1450, 430, 560, PAL.blueDeep, t, 1, 2, 'none', PAL.blueDeep);
     c.font = '800 76px "Barlow Condensed", sans-serif'; c.textAlign = 'center'; c.fillStyle = PAL.offWhite;
@@ -1075,8 +1106,28 @@ function drawColdOpen(c, t){
   if (eggA > 0){
     c.save(); c.globalAlpha = eggA;
     const crack = norm(t, 10.5, 12.5);
+    const push = 1 + 0.16 * norm(t, 0, 25.5);
+    c.translate(960, 430); c.scale(push, push); c.translate(-960, -430);
     drawEgg(c, 960, 430, norm(t, 0.4, 1.2), t, [11.8], crack);
     c.restore();
+    /* lineage threads draw outward as the VO counts the line (13.8-19.5s) */
+    if (t > 13.6 && t < 25.5){
+      const cols = [PAL.gold, PAL.cyanSpec, PAL.crimsonSpec, PAL.magentaVivid];
+      const ends = [[300, 200], [1620, 210], [330, 700], [1590, 690]];
+      ends.forEach((en, i) => {
+        const pr = norm(t, 13.8 + i * 0.9, 16.4 + i * 0.9);
+        if (pr > 0) drawLineageThread(c, {x: 960, y: 430}, {x: 960 + (en[0] - 960) * 0.3, y: 300},
+          {x: 960 + (en[0] - 960) * 0.7, y: en[1] + 120}, {x: en[0], y: en[1]}, cols[i], pr, t, 0.85 * eggA);
+      });
+    }
+    /* keyword chips cycle with the VO list (19.9-25.5s) */
+    if (t > 19.9 && t < 25.6){
+      const words = ['GODS', 'LIVING WEAPONS', 'GHOSTS', 'VISITORS FROM OTHER WORLDS'];
+      const idx = Math.min(3, Math.floor((t - 19.9) / 1.42));
+      c.save(); c.globalAlpha = eggA;
+      drawTypeBadge(c, words[idx], 960, 800, PAL.badges.canon, 'center');
+      c.restore();
+    }
   }
   if (t > 25.5 && t < 40.6){
     const a = Math.min(norm(t, 25.5, 26.2), 1 - norm(t, 39.8, 40.6));
@@ -1094,11 +1145,15 @@ function drawColdOpen(c, t){
 /* ---- main render ---- */
 function renderScene(t){
   const tint = [null, null, '#FFD84D', '#FF7A2A', '#38BDF8', '#9D00FF', '#C084FC', '#FF3CAC', '#38BDF8', null][SEG];
-  drawBackground2(ctx, t, tint ? hexA(tint, 1) : null);
+  drawBackground2(ctx, t, tint ? hexA(tint, 0.45) : null);
   const full = ['titlecard', 'quote', 'bigq', 'slam', 'azcard', 'galarian', 'paradox', 'vote'];
   const activeFull = D.specials.find(s => t >= s.start && t < s.end && full.includes(s.kind));
   if (SEG === 9){
+    ctx.save();
+    const zp = 1 + 0.075 * norm(t, 0, DUR);
+    ctx.translate(960, 500); ctx.scale(zp, zp); ctx.translate(-960, -500);
     drawMapGeneric(ctx, t, 'final');
+    ctx.restore();
     if (activeFull) drawSpecial(ctx, t, activeFull);
   } else if (SEG === 1){
     if (!activeFull || activeFull.kind !== 'titlecard') drawColdOpen(ctx, t);
@@ -1111,7 +1166,13 @@ function renderScene(t){
     if (!activeFull){
       const beat = D.beats.find(b => t >= b.start && t < b.end) || D.beats[D.beats.length - 1];
       if (beat && beat.kind === 'mapbeat') drawMapGeneric(ctx, t, 'lit');
-      else if (beat) drawStage(ctx, t, beat);
+      else if (beat){
+        ctx.save();
+        const zp = 1 + 0.03 * norm(t, beat.start, beat.end);
+        ctx.translate(960, 470); ctx.scale(zp, zp); ctx.translate(-960, -470);
+        drawStage(ctx, t, beat);
+        ctx.restore();
+      }
     } else {
       drawSpecial(ctx, t, activeFull);
     }
