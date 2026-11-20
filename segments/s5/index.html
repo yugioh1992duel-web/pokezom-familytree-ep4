@@ -989,6 +989,8 @@ function centerCard(c, t, s, title, sub, accent){
   c.font = '800 92px "Barlow Condensed", sans-serif';
   c.fillText(title, 960, 448);
   if (sub){ c.font = '600 46px "Barlow", sans-serif'; c.fillStyle = '#C9CEDA'; c.fillText(sub, 960, 540); }
+  const pw = 1020 * norm(t, s.start, s.end);
+  c.fillStyle = hexA(accent || PAL.gold, 0.85); c.fillRect(450, 612, pw, 5);
   c.restore();
 }
 function drawQuote(c, t, s){
@@ -1000,6 +1002,8 @@ function drawQuote(c, t, s){
   wrapTextC(c, '\u201C' + s.text + '\u201D', 960, 380, 1060, 64);
   c.font = '700 46px "JetBrains Mono", monospace'; c.fillStyle = PAL.gold;
   c.fillText(s.tag, 960, 596);
+  const pw = 1120 * norm(t, s.start, s.end);
+  c.fillStyle = hexA(PAL.gold, 0.85); c.fillRect(400, 640, pw, 5);
   c.restore();
 }
 function wrapTextC(c, text, cx, y, maxW, lh){
@@ -1021,7 +1025,10 @@ function drawSpecial(c, t, s){
     c.fillText('THE COMPLETE LEGENDARY', 960, 470);
     c.fillText('FAMILY TREE', 960, 592);
     c.font = '800 84px "Barlow Condensed", sans-serif'; c.fillStyle = PAL.gold;
-    c.fillText('125 CONNECTED', 960, 716);
+    const cnt = Math.round(125 * norm(t, s.start + 0.9, s.start + 3.6));
+    c.fillText(cnt + ' CONNECTED', 960, 716);
+    const pw = 640 * norm(t, s.start + 0.3, s.end - 0.3);
+    c.fillStyle = PAL.gold; c.fillRect(960 - 320, 748, pw, 5);
     c.restore();
   } else if (s.kind === 'quote'){ drawQuote(c, t, s); }
   else if (s.kind === 'bigq'){ centerCard(c, t, s, s.text, s.sub, PAL.cyanSpec); }
