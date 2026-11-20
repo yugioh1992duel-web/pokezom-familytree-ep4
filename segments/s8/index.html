@@ -946,7 +946,13 @@ function drawStage(c, t, beat){
       const cardA = norm(lt, 0.55, 1.0);
       if (cardA > 0){
         const cardX = beat.variant === 1 ? 210 : 1010;
-        drawEditorialCard(c, cardX, 218, 700, 330, sp.accent, cardA);
+        let cardExtra = 0;
+        if (sp.grade && sp.fact){
+          c.save(); c.font = '600 46px "Barlow", sans-serif';
+          cardExtra = Math.max(0, factLines(c, sp.fact, 620) - 1) * 62;
+          c.restore();
+        }
+        drawEditorialCard(c, cardX, 218, 700, 330 + cardExtra, sp.accent, cardA);
         c.save(); c.globalAlpha = cardA;
         namePlate(c, sp, cardX + 42, 218 + 108, 96, 'left');
         typeLine(c, sp, cardX + 42 + Math.ceil(textW(c, (sp.t2 ? sp.t1 + ' / ' + sp.t2 : sp.t1).toUpperCase(), '700 46px "JetBrains Mono", monospace')) / 2, 218 + 168);
@@ -960,7 +966,7 @@ function drawStage(c, t, beat){
         if (sp.grade && lt > 3.4){
           const ga = norm(lt, 3.4, 3.8);
           c.save(); c.globalAlpha = ga;
-          drawTypeBadge(c, sp.grade, cardX + 42, 218 + 268, sp.grade === 'CANON' ? PAL.badges.canon : PAL.badges.implied, 'left');
+          drawTypeBadge(c, sp.grade, cardX + 42, 218 + 268 + cardExtra, sp.grade === 'CANON' ? PAL.badges.canon : PAL.badges.implied, 'left');
           c.restore();
         }
         c.restore();
@@ -992,6 +998,15 @@ function wrapText(c, text, x, y, maxW, lh){
     else line = trial;
   }
   if (line) c.fillText(line, x, yy);
+}
+function factLines(c, text, maxW){
+  const words = text.split(' '); let line = '', n = 1;
+  for (const w of words){
+    const trial = line ? line + ' ' + w : w;
+    if (c.measureText(trial).width > maxW && line){ n++; line = w; }
+    else line = trial;
+  }
+  return n;
 }
 /* ---- specials ---- */
 function centerCard(c, t, s, title, sub, accent){
