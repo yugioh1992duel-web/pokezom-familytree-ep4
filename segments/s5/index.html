@@ -144,6 +144,39 @@ window.__DATA__ = {"seg": 5, "dur": 201.5, "intro": 3.2, "kick": "CHAPTER 4", "t
 const W = 1920, H = 1080, DUR = 201.5;
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
+const SILCACHE = {};
+function silCanvas(key, fill){
+  const img = IMG[key];
+  if(!img || !img.complete || !img.naturalWidth) return null;
+  const ck = key + '|' + fill;
+  if(SILCACHE[ck]) return SILCACHE[ck];
+  const cv2 = document.createElement('canvas');
+  cv2.width = img.naturalWidth; cv2.height = img.naturalHeight;
+  const g = cv2.getContext('2d');
+  g.drawImage(img, 0, 0);
+  g.globalCompositeOperation = 'source-in';
+  if(fill === 'slate'){
+    const gr = g.createLinearGradient(0, 0, 0, cv2.height);
+    gr.addColorStop(0, '#2E3A58'); gr.addColorStop(1, '#1B2338');
+    g.fillStyle = gr;
+  } else g.fillStyle = fill;
+  g.fillRect(0, 0, cv2.width, cv2.height);
+  SILCACHE[ck] = cv2;
+  return cv2;
+}
+/* Blacked-out mystery shape: accent rim-glow halo + lifted slate body. */
+function drawSilhouette(c, key, cx, cy, size, accent, alpha=1){
+  const sil = silCanvas(key, 'slate'), rim = silCanvas(key, accent);
+  if(!sil || !rim) return;
+  c.save(); c.globalAlpha *= alpha;
+  c.save();
+  c.shadowColor = accent; c.shadowBlur = 30;
+  c.drawImage(rim, cx - size/2, cy - size/2, size, size);
+  c.drawImage(rim, cx - size/2, cy - size/2, size, size);
+  c.restore();
+  c.drawImage(sil, cx - size/2, cy - size/2, size, size);
+  c.restore();
+}
 const PAL = {
   plate:'#17181D', offWhite:'#EDEDED', silver:'#B4BCC6',
   gold:'#E6B84C', goldBright:'#F4D58D', goldSpec:'#FFD000',
@@ -748,19 +781,6 @@ function drawShards(c,t,stageAlpha){
   }
 }
 /* ---- background: obsidian gradient, nebula haze, stardust parallax, embers. NO GRID. ---- */
-function drawNodeSilhouette(c,cx,cy,r,key,accent,t,alpha){
-  c.save();
-  c.beginPath(); c.arc(cx,cy,r-6,0,Math.PI*2); c.clip();
-  drawSilhouette(c,key,cx,cy,(r-6)*2,accent,alpha);
-  c.restore();
-  const pulse=0.45+0.35*Math.sin(t*2.2+cx*0.01);
-  c.save(); c.globalAlpha*=alpha*pulse;
-  c.beginPath(); c.arc(cx,cy,r+2,0,Math.PI*2);
-  c.strokeStyle=accent; c.lineWidth=3;
-  c.shadowColor=accent; c.shadowBlur=12; c.stroke();
-  c.restore();
-}
-function drawMapNodeSil(c,node,key,accent,name,sub,t,alpha){
 function drawNodeSilhouette(c,cx,cy,r,key,accent,t,alpha){
   c.save();
   c.beginPath(); c.arc(cx,cy,r-6,0,Math.PI*2); c.clip();
